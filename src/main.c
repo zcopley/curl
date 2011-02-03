@@ -522,6 +522,7 @@ struct Configurable {
   bool unrestricted_auth;  /* Continue to send authentication (user+password)
                               when following ocations, even when hostname
                               changed */
+  bool negotiate_delegate; /* Permit SPNEGO credential delegation */
   bool netrc_opt;
   bool netrc;
   bool noprogress;
@@ -1849,6 +1850,7 @@ static ParameterError getparameter(char *flag, /* f or -long-flag */
     {"$h", "retry-delay", TRUE},
     {"$i", "retry-max-time", TRUE},
     {"$k", "proxy-negotiate",   FALSE},
+    {"$l", "negotiate-delegate", FALSE},
     {"$m", "ftp-account", TRUE},
     {"$n", "proxy-anyauth", FALSE},
     {"$o", "trace-time", FALSE},
@@ -2143,11 +2145,13 @@ static ParameterError getparameter(char *flag, /* f or -long-flag */
         if(toggle) {
           if(curlinfo->features & CURL_VERSION_GSSNEGOTIATE)
             config->authtype |= CURLAUTH_GSSNEGOTIATE;
+          else if(curlinfo->features & CURL_VERSION_MS_NEGOTIATE)
+        	config->authtype |= CURLAUTH_MS_NEGOTIATE;
           else
             return PARAM_LIBCURL_DOESNT_SUPPORT;
         }
         else
-          config->authtype &= ~CURLAUTH_GSSNEGOTIATE;
+          config->authtype &= ~(CURLAUTH_GSSNEGOTIATE | CURLAUTH_MS_NEGOTIATE);
         break;
 
       case 'm': /* --ntlm */
@@ -2323,11 +2327,17 @@ static ParameterError getparameter(char *flag, /* f or -long-flag */
         break;
 
       case 'k': /* --proxy-negotiate */
-        if(curlinfo->features & CURL_VERSION_GSSNEGOTIATE)
+        if(curlinfo->features & (CURL_VERSION_GSSNEGOTIATE | CURL_VERSION_MS_NEGOTIATE))
           config->proxynegotiate = toggle;
         else
           return PARAM_LIBCURL_DOESNT_SUPPORT;
         break;
+      case 'l': /* --negotiate-delegate */
+    	  if(curlinfo->features & CURL_VERSION_MS_NEGOTIATE)
+    		  config->negotiate_delegate = toggle;
+    	  else
+    		  return PARAM_LIBCURL_DOESNT_SUPPORT;
+    	  break;
       case 'm': /* --ftp-account */
         GetStr(&config->ftp_account, nextarg);
         break;
@@ -3120,7 +3130,8 @@ static ParameterError getparameter(char *flag, /* f or -long-flag */
           {"SSPI",  CURL_VERSION_SSPI},
           {"krb4", CURL_VERSION_KERBEROS4},
           {"libz", CURL_VERSION_LIBZ},
-          {"CharConv", CURL_VERSION_CONV}
+          {"CharConv", CURL_VERSION_CONV},
+          {"SSPI-Negotiate", CURL_VERSION_MS_NEGOTIATE}
         };
         printf("Features: ");
         for(i=0; i<sizeof(feats)/sizeof(feats[0]); i++) {
@@ -5459,6 +5470,9 @@ operate(struct Configurable *config, int argc, argv_item_t argv[])
         if(config->resolve)
           /* new in 7.21.3 */
           my_setopt(curl, CURLOPT_RESOLVE, config->resolve);
+
+        if(config->negotiate_delegate)
+        	my_setopt(curl, CURLOPT_NEGOTIATE_AUTH_DELEGATE, TRUE);
 
         retry_numretries = config->req_retry;
 

@@ -1110,6 +1110,11 @@ struct UrlState {
   struct negotiatedata proxyneg; /* state data for proxy Negotiate auth */
 #endif
 
+#ifdef USE_SSPI_NEGOTIATE
+  void *negotiate_data;
+  void *proxy_negotiate_data;
+#endif
+
   struct auth authhost;  /* auth details for host */
   struct auth authproxy; /* auth details for proxy */
 
@@ -1414,6 +1419,7 @@ struct UserDefined {
   bool http_fail_on_error;  /* fail on HTTP error codes >= 300 */
   bool http_follow_location; /* follow HTTP redirects */
   bool http_disable_hostname_check_before_authentication;
+  bool http_negotiate_auth_delegate; /* Permit credential delegation */
   bool include_header;   /* include received protocol headers in data output */
   bool http_set_referer; /* is a custom referer used */
   bool http_auto_referer; /* set "correct" referer when following location: */

@@ -100,6 +100,10 @@
 #include "rtsp.h"
 #include "warnless.h"
 
+#ifdef USE_SSPI_NEGOTIATE
+#include "http_negotiate_sspi.h"
+#endif
+
 #define _MPRINTF_REPLACE /* use our functions only */
 #include <curl/mprintf.h>
 
@@ -295,10 +299,11 @@ static bool pickoneauth(struct auth *pick)
   /* only deal with authentication we want */
   long avail = pick->avail & pick->want;
   picked = TRUE;
-
   /* The order of these checks is highly relevant, as this will be the order
      of preference in case of the existence of multiple accepted types. */
-  if(avail & CURLAUTH_GSSNEGOTIATE)
+  if(avail & CURLAUTH_MS_NEGOTIATE)
+	  pick->picked = CURLAUTH_MS_NEGOTIATE;
+  else if(avail & CURLAUTH_GSSNEGOTIATE)
     pick->picked = CURLAUTH_GSSNEGOTIATE;
   else if(avail & CURLAUTH_DIGEST)
     pick->picked = CURLAUTH_DIGEST;
@@ -463,6 +468,11 @@ CURLcode Curl_http_auth_act(struct connectdata *conn)
       data->state.authproblem = TRUE;
   }
 
+#ifdef USE_SSPI_NEGOTIATE
+  if((data->req.httpcode == 401) && (data->set.httpauth & CURLAUTH_MS_NEGOTIATE) && !pickhost)
+	  pickhost = pickoneauth(&data->state.authhost);
+#endif
+
   if(pickhost || pickproxy) {
     /* In case this is GSS auth, the newurl field is already allocated so
        we must make sure to free it before allocating a new one. As figured
@@ -528,6 +538,15 @@ output_auth_headers(struct connectdata *conn,
 #ifdef CURL_DISABLE_CRYPTO_AUTH
   (void)request;
   (void)path;
+#endif
+
+#ifdef USE_SSPI_NEGOTIATE
+  if((authstatus->picked == CURLAUTH_MS_NEGOTIATE)) {
+	  result = Curl_output_negotiate(conn, proxy);
+	  auth = "Negotiate";
+	  if(result)
+		  return result;
+  }
 #endif
 
 #ifdef HAVE_GSSAPI
@@ -626,6 +645,10 @@ http_output_auth(struct connectdata *conn,
   if((conn->bits.httpproxy && conn->bits.proxy_user_passwd) ||
      conn->bits.user_passwd)
     /* continue please */ ;
+#ifdef USE_SSPI_NEGOTIATE
+  else if(conn->data->state.negotiate_data != NULL || conn->data->state.proxy_negotiate_data != NULL)
+	/* fall through */;
+#endif
   else {
     authhost->done = TRUE;
     authproxy->done = TRUE;
@@ -726,6 +749,19 @@ CURLcode Curl_http_input_auth(struct connectdata *conn,
    * (bit).
    *
    */
+
+#ifdef USE_SSPI_NEGOTIATE
+  if(checkprefix("Negotiate", start)) {
+	  if(data->set.httpauth & CURLAUTH_MS_NEGOTIATE) {
+		CURLcode res;
+		*availp |= CURLAUTH_MS_NEGOTIATE;
+		authp->avail |= CURLAUTH_MS_NEGOTIATE;
+		res = Curl_input_negotiate(conn, (bool)(httpcode == 407), start);
+	  } else {
+		  infof(data, "Server offered Negotiate authentication but not enabled. Use (--negotiate) to enable.\n");
+	  }
+  }
+#endif
 
 #ifdef HAVE_GSSAPI
   if(checkprefix("GSS-Negotiate", start) ||

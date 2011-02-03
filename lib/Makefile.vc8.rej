@@ -1,0 +1,35 @@
+***************
+*** 109,114 ****
+  CFLAGS = $(CFLAGS) /DUSE_WINDOWS_SSPI /I$(WINDOWS_SDK_PATH)\include
+  !ENDIF
+  
+  !IFDEF USE_IPV6
+  CFLAGS = $(CFLAGS) /DUSE_IPV6
+  !ENDIF
+--- 109,118 ----
+  CFLAGS = $(CFLAGS) /DUSE_WINDOWS_SSPI /I$(WINDOWS_SDK_PATH)\include
+  !ENDIF
+  
++ !IFDEF SSPI_NEGOTIATE
++ CFLAGS = $(CFLAGS) /DUSE_SSPI_NEGOTIATE /D_WIN32_WINNT=0x0502
++ !ENDIF
++ 
+  !IFDEF USE_IPV6
+  CFLAGS = $(CFLAGS) /DUSE_IPV6
+  !ENDIF
+***************
+*** 484,489 ****
+  	$(DIROBJ)\http_chunks.obj \
+  	$(DIROBJ)\http_digest.obj \
+  	$(DIROBJ)\http_negotiate.obj \
+  	$(DIROBJ)\http_ntlm.obj \
+  	$(DIROBJ)\http.obj \
+  	$(DIROBJ)\if2ip.obj \
+--- 488,494 ----
+  	$(DIROBJ)\http_chunks.obj \
+  	$(DIROBJ)\http_digest.obj \
+  	$(DIROBJ)\http_negotiate.obj \
++ 	$(DIROBJ)\http_negotiate_sspi.obj \
+  	$(DIROBJ)\http_ntlm.obj \
+  	$(DIROBJ)\http.obj \
+  	$(DIROBJ)\if2ip.obj \

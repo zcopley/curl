@@ -260,6 +260,9 @@ static curl_version_info_data version_info = {
 #if defined(CURL_DOES_CONVERSIONS)
   | CURL_VERSION_CONV
 #endif
+#ifdef USE_SSPI_NEGOTIATE
+  | CURL_VERSION_MS_NEGOTIATE
+#endif
   ,
   NULL, /* ssl_version */
   0,    /* ssl_version_num, this is kept at zero */

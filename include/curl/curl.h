@@ -585,6 +585,7 @@ typedef enum {
 #define CURLAUTH_GSSNEGOTIATE (1<<2)  /* GSS-Negotiate */
 #define CURLAUTH_NTLM         (1<<3)  /* NTLM */
 #define CURLAUTH_DIGEST_IE    (1<<4)  /* Digest with IE flavour */
+#define CURLAUTH_MS_NEGOTIATE (1<<5)  /* Negotiate (Native Windows SPNEGO) */
 #define CURLAUTH_ONLY         (1<<31) /* used together with a single other
                                          type to force no auth or just that
                                          single type */
@@ -1442,6 +1443,9 @@ typedef enum {
   /* send linked-list of name:port:address sets */
   CINIT(RESOLVE, OBJECTPOINT, 203),
 
+  /* Permit server to delegate SPNEGO credentials */
+  CINIT(NEGOTIATE_AUTH_DELEGATE, LONG, 204),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
@@ -2043,6 +2047,7 @@ typedef struct {
 #define CURL_VERSION_SSPI      (1<<11) /* SSPI is supported */
 #define CURL_VERSION_CONV      (1<<12) /* character conversions supported */
 #define CURL_VERSION_CURLDEBUG (1<<13) /* debug memory tracking supported */
+#define CURL_VERSION_MS_NEGOTIATE (1<<14) /* Windows native SSPI Negotiate authentication */
 
 /*
  * NAME curl_version_info()

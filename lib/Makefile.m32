@@ -111,6 +111,9 @@ ifdef USE_LDAP_OPENLDAP
   CFLAGS += -DCURL_HAS_OPENLDAP_LDAPSDK
   DLL_LIBS += -L"$(LDAP_SDK)/lib" -lldap -llber
 endif
+ifdef SSPI_NEGOTIATE
+	CFLAGS += -DUSE_SSPI_NEGOTIATE -D_WIN32_WINNT=0x0502
+endif
 ifndef USE_LDAP_NOVELL
 ifndef USE_LDAP_OPENLDAP
 DLL_LIBS += -lwldap32
@@ -121,6 +124,9 @@ COMPILE = $(CC) $(INCLUDES) $(CFLAGS)
 
 # Makefile.inc provides the CSOURCES and HHEADERS defines
 include Makefile.inc
+
+CSOURCES += http_negotiate_sspi.c
+HHEADERS += http_negotiate_sspi.h
 
 libcurl_dll_LIBRARY = libcurl.dll
 libcurl_dll_a_LIBRARY = libcurldll.a

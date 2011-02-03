@@ -123,6 +123,9 @@ ifndef USE_LDAP_OPENLDAP
 curl_LDADD += -lwldap32
 endif
 endif
+ifdef SSPI_NEGOTIATE
+	CFLAGS += -DUSE_SSPI_NEGOTIATE
+endif
 curl_LDADD += -lws2_32
 COMPILE = $(CC) $(INCLUDES) $(CFLAGS)
 

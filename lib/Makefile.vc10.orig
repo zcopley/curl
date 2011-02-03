@@ -20,7 +20,7 @@
 #
 ###########################################################################
 #
-# Makefile for building libcurl with MSVC6
+# Makefile for building libcurl with MSVC10
 #
 # Usage: see usage message below
 #        Should be invoked from \lib directory
@@ -67,7 +67,7 @@ MACHINE  = X86
 
 # USE_WINDOWS_SSPI uses windows libraries to allow NTLM authentication
 # without an openssl installation and offers the ability to authenticate
-# using the "current logged in user". Since at least with MSVC6 the sspi.h
+# using the "current logged in user". Since at least with MSVC10 the sspi.h
 # header is broken it is either required to install the Windows SDK,
 # or to fix sspi.h with adding this define at the beginning of sspi.h:
 # #define FreeCredentialHandle FreeCredentialsHandle
@@ -89,10 +89,10 @@ WINDOWS_SDK_PATH = "C:\Program Files\Microsoft SDK"
 ## Nothing more to do below this line!
 
 CCNODBG    = cl.exe /O2 /DNDEBUG
-CCDEBUG    = cl.exe /Od /Gm /Zi /D_DEBUG /GZ
+CCDEBUG    = cl.exe /Od /Gm /Zi /D_DEBUG /RTC1
 CFLAGSSSL  = /DUSE_SSLEAY /I "$(OPENSSL_PATH)/inc32" /I "$(OPENSSL_PATH)/inc32/openssl"
 CFLAGSZLIB = /DHAVE_ZLIB_H /DHAVE_ZLIB /DHAVE_LIBZ /I "$(ZLIB_PATH)"
-CFLAGS     = /I. /I../include /nologo /W3 /GX /DWIN32 /YX /FD /c /DBUILDING_LIBCURL
+CFLAGS     = /I. /I../include /nologo /W3 /EHsc /DWIN32 /FD /c /DBUILDING_LIBCURL
 CFLAGSLIB  = /DCURL_STATICLIB
 LNKDLL     = link.exe /DLL
 LNKLIB     = link.exe /lib
@@ -107,10 +107,6 @@ CFGSET     = FALSE
 
 !IFDEF WINDOWS_SSPI
 CFLAGS = $(CFLAGS) /DUSE_WINDOWS_SSPI /I$(WINDOWS_SDK_PATH)\include
-!ENDIF
-
-!IFDEF SSPI_NEGOTIATE
-CFLAGS = $(CFLAGS) /DUSE_SSPI_NEGOTIATE /D_WIN32_WINNT=0x0502
 !ENDIF
 
 !IFDEF USE_IPV6
@@ -407,7 +403,7 @@ RESOURCE = $(DIROBJ)\libcurl.res
 # Usage
 #
 !IF "$(CFGSET)" == "FALSE" && "$(CFG)" != ""
-!MESSAGE Usage: nmake /f makefile.vc6 CFG=<config> <target>
+!MESSAGE Usage: nmake /f makefile.vc10 CFG=<config> <target>
 !MESSAGE where <config> is one of:
 !MESSAGE   release                      - release static library
 !MESSAGE   release-ssl                  - release static library with ssl
@@ -488,7 +484,6 @@ X_OBJS= \
 	$(DIROBJ)\http_chunks.obj \
 	$(DIROBJ)\http_digest.obj \
 	$(DIROBJ)\http_negotiate.obj \
-	$(DIROBJ)\http_negotiate_sspi.obj \
 	$(DIROBJ)\http_ntlm.obj \
 	$(DIROBJ)\http.obj \
 	$(DIROBJ)\if2ip.obj \
